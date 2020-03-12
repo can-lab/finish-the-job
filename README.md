@@ -2,13 +2,15 @@
 Nipype pipeline for common preprocessing steps after fMRIprep
 
 ## Introduction
-fMRIprep stops preprocessing after normalization. Often you also need your data to be spatially smoothed and/or temporally highpass-filtered. Finish the job is a convenient way to do this by simply specifying the directory of the preprocessed data from fMRIprep, a list of subjects to run it on, and a pipeline that specifies the details of the additional preprocessing steps to run, as well as their order.
+fMRIprep stops preprocessing after normalization. Often you also need your data to be spatially smoothed and/or temporally highpass-filtered. Finish the job is a convenient way to do this by simply specifying the directory of the preprocessed data from fMRIprep, a list of subjects to run it on, and a pipeline that specifies the details of the additional preprocessing steps to run, as well as their order. All `bold` images of the specified subjects found in the fMRIprep directory will be processed.
 
 Example pipeline `{"spatial_smoothing": 5, "highpass_filtering": 100}`:
 
 <a href="https://github.com/can-lab/finish-the-job/blob/master/graph_colored.png">
   <img src="https://github.com/can-lab/finish-the-job/raw/master/graph_colored.png" width="300">
 </a>
+
+Preprocessed images are saved next to the input images, with the `desc` field updated to reflect the preprocessing details (`preproc5mm100s` in the above example).
 
 ## Prerequisites
 1. Install [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
