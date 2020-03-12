@@ -28,14 +28,12 @@ Preprocessed images are saved next to the input images, with the `desc` field up
 
 ### Donders cluster
 If you are working on the compute cluster of the Donders Institute, please follow the following steps:
-1. Load fMRIprep module by running command: `module load fmriprep`
-2. Install virtualenv by running command: `pip3 install virtualenv --user`
-3. Create new environment in home directory by running command: `cd && python3 -m virtualenv ftj_env`
-4. Activate new environment by running command: `source ~/ftj_env/bin/activate`
-5. Update pip in environment by running command: `pip3 install -U pip`
-6. Install Nipype, Nifow-manager into environment by running command: `pip3 install nipype niflow-manager niflow-nipype1-workflows`
-4. Download [Finish the job](https://github.com/can-lab/finish-the-job/releases/latest)
-5. Install with
+1. Load Anaconda3 module by running command: `module load anaconda3`
+2. Create new environment in home directory by running command: `cd && conda create --name ftj_env`
+4. Activate new environment by running command: `source activate ftj_env`
+5. Install Nipype, Nifow-manager into environment by running command: `pip3 install nipype niflow-manager niflow-nipype1-workflows`
+6. Download [Finish the job](https://github.com/can-lab/finish-the-job/releases/latest)
+7. Install with
    ```
    pip3 install finish-the-job-X.X.X.zip
    ```
@@ -48,16 +46,15 @@ from finish_the_job import finish_the_job
 finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                subjects=[1,2,3],
                pipeline = {"spatial_smoothing": 5,
-                           "highpass_filtering": 100,
-                           "timecourse_normalization": "Z"})
+                           "highpass_filtering": 100})
 ```
 
 ### Donders cluster
 If you are working on the compute cluster of the Donders Institute, please follow the following steps:
 1. Start a new interactive job by running command: `qsub -I -l 'procs=8, mem=64gb, walltime=24:00:00'`
-2. Load fMRIprep module by running command: `module load fmriprep`
+2. Load Anaconda3 module by running command: `module load anaconda3`
 3. Load graphviz module by running command: `module load graphviz`
-4. Activate environment by running command: `source ~/ftj_env/bin/activate`
+4. Activate environment by running command: `source activate ftj_env`
 5. Write script `mystudy_ftj.py` with custom workflow:
    ```python
    from finish_the_job import finish_the_job
@@ -65,7 +62,6 @@ If you are working on the compute cluster of the Donders Institute, please follo
    finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                   subjects=[1,2,3],
                   pipeline = {"spatial_smoothing": 5,
-                              "highpass_filtering": 100,
-                              "timecourse_normalization": "Z"})
+                              "highpass_filtering": 100})
    ```
 6. Run script by running command: `python3 mystudy_ftj.py`
