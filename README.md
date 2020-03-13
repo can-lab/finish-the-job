@@ -19,8 +19,8 @@ Preprocessed images are saved next to the input images, with the `desc` field up
    ```
    pip3 install nipype niflow-manager niflow-nipype1-workflows
    ```
-4. Download [Finish the job](https://github.com/can-lab/finish-the-job/releases/latest)
-5. Install wth
+4. Download [Finish the job](https://github.com/can-lab/finish-the-job/archive/master.zip)
+5. Install with
    ```
    pip3 install finish-the-job-X.X.X.zip
    ```
@@ -32,7 +32,7 @@ If you are working on the compute cluster of the Donders Institute, please follo
 2. Create new environment in home directory by running command: `cd && conda create --name ftj_env`
 4. Activate new environment by running command: `source activate ftj_env`
 5. Install Nipype, Nifow-manager into environment by running command: `pip3 install nipype niflow-manager niflow-nipype1-workflows`
-6. Download [Finish the job](https://github.com/can-lab/finish-the-job/releases/latest)
+6. Download [Finish the job](https://github.com/can-lab/finish-the-job/archive/master.zip)
 7. Install with
    ```
    pip3 install finish-the-job-X.X.X.zip
