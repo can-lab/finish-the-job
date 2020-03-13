@@ -6,7 +6,13 @@ fMRIprep stops preprocessing after normalization. Often you also need your data 
 
 Currently available preprocessing steps:
 * Spatial smoothing
+  * name: "spatial_smoothing"
+  * spec: FHWM kernel size in millimeter (numeric)
 * Highpass filtering
+  * name: "highpass_filtering"
+  * spec: filter size in seconds (numeric)
+
+Preprocessing pipelines are simply dictionaries with the step names as keys and the step spec as values.
 
 Example pipeline `{"spatial_smoothing": 5, "highpass_filtering": 100}`:
 
