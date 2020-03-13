@@ -1,5 +1,5 @@
 # Finish the job
-Nipype pipeline for common preprocessing steps after fMRIprep
+Running common preprocessing steps after fMRIprep
 
 ## Introduction
 fMRIprep stops preprocessing after normalization. Often you also need your data to be spatially smoothed and/or temporally highpass-filtered. Finish the job is a convenient way to do this by simply specifying the directory of the preprocessed data from fMRIprep, a list of subjects to run it on, and a pipeline that specifies the details of the additional preprocessing steps to run, as well as their order. All `bold` images of the specified subjects found in the fMRIprep directory will be processed.
