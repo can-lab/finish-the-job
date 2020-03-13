@@ -67,7 +67,7 @@ def create_highpass_filter(cutoff=100, name='highpass'):
                        name='meanfunc')
 
     # Filter data
-    filter_ = MapNode(fsl.ImageMaths(suffix='_tempfilt', out_data_type='int')
+    filter_ = MapNode(fsl.ImageMaths(suffix='_tempfilt', out_data_type='int'),
                       iterfield=["in_file", "op_string"], name='filter')
 
     # Restore mean
@@ -109,7 +109,7 @@ def get_boldfile_template(fmriprep_dir, subject):
     if type(subject) == int:
         subject = "sub-{0:03d}".format(subject)
     return os.path.join(fmriprep_dir, subject, "ses-*", "func",
-                        "*_bold.nii.gz")
+                        "*_desc-preproc_bold.nii.gz")
 
 def get_masks(bold_files):
     """Get mask files for given bold files.
@@ -260,7 +260,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
                                                            "subject"],
                                               output_names=["template"],
                                               function=get_boldfile_template),
-                    name='template')
+                    name='boldfile_template')
     boldfile_template.inputs.fmriprep_dir = fmriprep_dir
     boldfile_template.iterables = ("subject", subjects)
 
@@ -279,13 +279,13 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
                                          output_names=["output_filename"],
                                          function=get_output_filename),
                         iterfield=["bold_filename"],
-                    name='filename')
+                    name='filenames')
     ftj.connect(preprocessing, "outputspec.suffix", filenames, "suffix")
     ftj.connect(dg, "outfiles", filenames, "bold_filename")
 
     # Save preprocessed files
     ef = MapNode(io.ExportFile(), iterfield=["in_file", "out_file"],
-                 name="export_file")
+                 name="file_export")
     ftj.connect(preprocessing, "outputspec.preprocessed_files", ef, "in_file")
     ftj.connect(filenames, "output_filename", ef, "out_file")
 
