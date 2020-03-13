@@ -40,13 +40,15 @@ If you are working on the compute cluster of the Donders Institute, please follo
    (replace X.X.X with latest release version)
 
 ## Usage
+Example:
 ```python
 from finish_the_job import finish_the_job
 
 finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                subjects=[1,2,3],
-               pipeline = {"spatial_smoothing": 5,
-                           "highpass_filtering": 100})
+               pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
+                           "highpass_filtering": 100  # Step 2: highpass filtering with 100 s filter size
+                           })
 ```
 
 ### Donders cluster
@@ -55,13 +57,14 @@ If you are working on the compute cluster of the Donders Institute, please follo
 2. Load Anaconda3 module by running command: `module load anaconda3`
 3. Load graphviz module by running command: `module load graphviz`
 4. Activate environment by running command: `source activate ftj_env`
-5. Write script `mystudy_ftj.py` with custom workflow:
+5. Write script `mystudy_ftj.py` with custom workflow; example:
    ```python
    from finish_the_job import finish_the_job
 
    finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                   subjects=[1,2,3],
-                  pipeline = {"spatial_smoothing": 5,
-                              "highpass_filtering": 100})
+                  pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
+                              "highpass_filtering": 100  # Step 2: highpass filtering with 100 s filter size
+                              })
    ```
 6. Run script by running command: `python3 mystudy_ftj.py`
