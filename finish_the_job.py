@@ -182,10 +182,10 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
     state = {"last": inputspec, "last_output": "in_files", "suffix": ""}
 
     # Run each step in pipeline
-    for step,argument in pipeline.items():
+    for step,spec in pipeline.items():
         if step == "spatial_smoothing":
             smooth = create_susan_smooth()
-            smooth.inputs.inputnode.fwhm = argument
+            smooth.inputs.inputnode.fwhm = spec
             preprocessing.connect(state["last"], state["last_output"],
                                 smooth, "inputnode.in_files")
             preprocessing.connect(state["last"], (state["last_output"],
@@ -193,14 +193,14 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
                                 smooth, "inputnode.mask_file")
             state["last"] = smooth
             state["last_output"] = "outputnode.smoothed_files"
-            state["suffix"] += "{0}mm".format(argument)
+            state["suffix"] += "{0}mm".format(spec)
         if step == "highpass_filtering":
-            highpass = create_highpass_filter(argument)
+            highpass = create_highpass_filter(spec)
             preprocessing.connect(state["last"], state["last_output"],
                                 highpass, "inputspec.in_files")
             state["last"] = highpass
             state["last_output"] = "outputspec.filtered_files"
-            state["suffix"] += "{0}s".format(argument)
+            state["suffix"] += "{0}s".format(spec)
         if step == "timecourse_normalization":
             # TODO
             pass
