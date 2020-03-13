@@ -5,12 +5,12 @@ Nipype pipeline for common preprocessing steps after fMRIprep
 fMRIprep stops preprocessing after normalization. Often you also need your data to be spatially smoothed and/or temporally highpass-filtered. Finish the job is a convenient way to do this by simply specifying the directory of the preprocessed data from fMRIprep, a list of subjects to run it on, and a pipeline that specifies the details of the additional preprocessing steps to run, as well as their order. All `bold` images of the specified subjects found in the fMRIprep directory will be processed.
 
 Currently available preprocessing steps:
-* "spatial_smoothing"
+* **"spatial_smoothing"**
   * _spec_: FHWM kernel size in millimeter (numeric)
-* "highpass_filtering"
+* **"highpass_filtering"**
   * _spec_: filter size in seconds (numeric)
 
-Preprocessing pipelines are simply dictionaries with steps as keys and their specs as values.
+Pipelines are simply dictionaries with preprocessing steps as keys and their specs as values.
 
 Example pipeline `{"spatial_smoothing": 5, "highpass_filtering": 100}`:
 
