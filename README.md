@@ -10,7 +10,7 @@ Currently available preprocessing steps:
 * **"highpass_filtering"**
   * _spec_: filter size in seconds (numeric)
 * **"timecourse_normalization"** (**Note:** also performs brain extraction!)
-  * _spec_: normalization methods (str; "Z" or "PCT")
+  * _spec_: normalization methods ("Z" or "PCT")
 
 Pipelines are simply dictionaries with preprocessing steps as keys and their specs as values.
 
