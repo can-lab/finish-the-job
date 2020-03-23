@@ -4,23 +4,62 @@ Nipype pipeline for common preprocessing steps after fMRIprep:
 
 - Spatial smoothing
 - Highpass filtering
+- Timecourse normalization
 
 Dependencies:
 
 - nipype
 - niflow-nipype1-workflows
+- nilearn
+- nibabel
 
 """
 
-__author__ = "Florian Krause <f.krause@donders.ru.nl>"
+__author__ = "Florian Krause <f.krause@donders.ru.nl>, \
+              Martin Krentz <m.krentz@donders.ru.nl>"
 __version__ = "0.1.0"
-__date__ = "2020-03-10"
+__date__ = "2020-03-23"
 
 
+import os
+
+import nibabel as nib
+from nilearn.input_data import NiftiMasker
 from nipype import Node, MapNode, Workflow
 from nipype.interfaces import utility, fsl, io
+from nipype.interfaces.base import BaseInterface, \
+        BaseInterfaceInputSpec, traits, File, Str, TraitedSpec
 from niflow.nipype1.workflows.fmri.fsl.preprocess import create_susan_smooth
 
+
+class TimecourseNormalizationInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, desc="functional image")
+    mask_file = File(exists=True, desc="mask image")
+    method = Str(desc="normalization method ('z' or 'psc')")
+
+class TimecourseNormalizationOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="functional image")
+
+class TimecourseNormalization(BaseInterface):
+    input_spec = TimecourseNormalizationInputSpec
+    output_spec = TimecourseNormalizationOutputSpec
+
+    def _run_interface(self, runtime):
+        orig_units = nib.load(self.inputs.in_file).header.get_xyzt_units()
+        masker = NiftiMasker(mask_img=self.inputs.mask_file,
+                             standardize=self.inputs.method)
+        standard_mat = masker.fit_transform(self.inputs.in_file)
+        standard_image = masker.inverse_transform(standard_mat)
+        standard_image.header.set_xyzt_units(orig_units[0], orig_units[1])
+        nib.save(standard_image, 'normalized.nii.gz')
+
+        return runtime
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs["out_file"] = os.path.abspath('normalized.nii.gz')
+
+        return outputs
 
 def create_highpass_filter(cutoff=100, name='highpass'):
     """Create a highpass filter workflow.
@@ -35,7 +74,7 @@ def create_highpass_filter(cutoff=100, name='highpass'):
     Returns
     =======
     highpass : nipype.Workflow object
-        the higpahs_filter object
+        the highpass filter workflow object
 
     """
 
@@ -86,6 +125,42 @@ def create_highpass_filter(cutoff=100, name='highpass'):
     highpass.connect(addmean, 'out_file', outputspec, 'filtered_files')
 
     return highpass
+
+def create_timecourse_normalization_workflow(method="Z", name="normalization"):
+    """Create a timcourse normalization workflow.
+
+    Parameters
+    ==========
+    method : str, optional
+        the normalization method ("Z" or "PCT"; default="Z")
+    name : str, optional
+        the name of the workflow (default="normalization")
+
+    Returns
+    =======
+    normalization : nipype.Workflow object
+        the timecourse normalization worklfow object
+
+    """
+
+    normalization = Workflow(name=name)
+    inputspec = Node(utility.IdentityInterface(fields=['in_files',
+                                                       'mask_files']),
+                     name='inputspec')
+
+    tn = MapNode(TimecourseNormalization(),
+                                iterfield=['in_file', 'mask_file'],
+                                name='normalize')
+    tn.inputs.method = method.lower()
+
+    outputspec = Node(utility.IdentityInterface(fields=['normalized_files']),
+                      name='outputspec')
+
+    normalization.connect(inputspec, 'in_files', tn, 'in_file')
+    normalization.connect(inputspec, 'mask_files', tn, 'mask_file')
+    normalization.connect(tn, 'out_file', outputspec, 'normalized_files')
+
+    return normalization
 
 def get_boldfile_template(fmriprep_dir, subject):
     """Return boldfile template string for given directory and subject.
@@ -164,6 +239,7 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
         the preprocessing pipeline (ordered!); possible options are:
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
             "highpass_filtering": numeric (cutoff value in seconds)
+            "timecourse_normalization": str ("Z" or "PCT")
     name : str, optional
         the name of the workflow (default="preprocessing")
 
@@ -184,26 +260,32 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
     # Run each step in pipeline
     for step,spec in pipeline.items():
         if step == "spatial_smoothing":
-            smooth = create_susan_smooth()
+            smooth = create_susan_smooth(name="spatial_smoothing")
             smooth.inputs.inputnode.fwhm = spec
             preprocessing.connect(state["last"], state["last_output"],
-                                smooth, "inputnode.in_files")
-            preprocessing.connect(state["last"], (state["last_output"],
-                                                  get_masks),
-                                smooth, "inputnode.mask_file")
+                                  smooth, "inputnode.in_files")
+            preprocessing.connect(inputspec, ("in_files", get_masks),
+                                  smooth, "inputnode.mask_file")
             state["last"] = smooth
             state["last_output"] = "outputnode.smoothed_files"
             state["suffix"] += "{0}mm".format(spec)
         if step == "highpass_filtering":
-            highpass = create_highpass_filter(spec)
+            highpass = create_highpass_filter(spec, name="highpass_filtering")
             preprocessing.connect(state["last"], state["last_output"],
-                                highpass, "inputspec.in_files")
+                                  highpass, "inputspec.in_files")
             state["last"] = highpass
             state["last_output"] = "outputspec.filtered_files"
             state["suffix"] += "{0}s".format(spec)
         if step == "timecourse_normalization":
-            # TODO
-            pass
+            normalize = create_timecourse_normalization_workflow(
+                name="timecourse_normalization")
+            preprocessing.connect(state["last"], state["last_output"],
+                                  normalize, "inputspec.in_files")
+            preprocessing.connect(inputspec, ("in_files", get_masks),
+                                  normalize, "inputspec.mask_files")
+            state["last"] = normalize
+            state["last_output"] = "outputspec.normalized_files"
+            state["suffix"] += "{0}".format(spec)
 
     outputspec = Node(utility.IdentityInterface(fields=["preprocessed_files",
                                                         "suffix"]),
@@ -248,28 +330,21 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     if work_dir is not None:
         ftj.base_dir = work_dir  # set working/output directory
 
-    # Input node
-    inputspec = Node(utility.IdentityInterface(fields=['fmriprep_dir',
-                                                       'subject']),
-                     name='inputspec')
-    inputspec.fmriprep_dir = fmriprep_dir
-    inputspec.iterables = ("subject", subjects)
-
     # Get boldfile template
     boldfile_template = Node(utility.Function(input_names=["fmriprep_dir",
                                                            "subject"],
                                               output_names=["template"],
                                               function=get_boldfile_template),
-                    name='boldfile_template')
+                    name='locate_bold_files')
     boldfile_template.inputs.fmriprep_dir = fmriprep_dir
     boldfile_template.iterables = ("subject", subjects)
 
     # Get inputs
-    dg = Node(io.DataGrabber(), name="data_grabber")
+    dg = Node(io.DataGrabber(), name="get_data")
     dg.inputs.sort_filelist = True
     ftj.connect(boldfile_template, "template", dg, "template")
 
-    # Preprocess , suffix files
+    # Preprocess files
     preprocessing = create_preprocessing_workflow(pipeline=pipeline)
     ftj.connect(dg, "outfiles", preprocessing, "inputspec.in_files")
 
@@ -279,13 +354,13 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
                                          output_names=["output_filename"],
                                          function=get_output_filename),
                         iterfield=["bold_filename"],
-                    name='filenames')
+                    name='create_output_filenames')
     ftj.connect(preprocessing, "outputspec.suffix", filenames, "suffix")
     ftj.connect(dg, "outfiles", filenames, "bold_filename")
 
     # Save preprocessed files
     ef = MapNode(io.ExportFile(), iterfield=["in_file", "out_file"],
-                 name="file_export")
+                 name="save_data")
     ftj.connect(preprocessing, "outputspec.preprocessed_files", ef, "in_file")
     ftj.connect(filenames, "output_filename", ef, "out_file")
 
@@ -294,3 +369,4 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
         ftj.write_graph(graph2use="colored",
                        dotfilename="graph_colored.dot")
     ftj.run()
+
