@@ -9,16 +9,18 @@ Currently available preprocessing steps:
   * _spec_: FHWM kernel size in millimeter (numeric)
 * **"highpass_filtering"**
   * _spec_: filter size in seconds (numeric)
+* **"timecourse_normalization"** (**Note:** also performs brain extraction!)
+  * _spec_: normalization methods (str; "Z" or "PCT")
 
 Pipelines are simply dictionaries with preprocessing steps as keys and their specs as values.
 
-Example pipeline `{"spatial_smoothing": 5, "highpass_filtering": 100}`:
+Example pipeline `{"spatial_smoothing": 5, "highpass_filtering": 100, "timecourse_normalization": "Z"}`:
 
 <a href="https://github.com/can-lab/finish-the-job/blob/master/graph_colored.png">
   <img src="https://github.com/can-lab/finish-the-job/raw/master/graph_colored.png" width="300">
 </a>
 
-Preprocessed images are saved next to the input images, with the `desc` field updated to reflect the preprocessing details (`preproc5mm100s` in the above example).
+Preprocessed images are saved next to the input images, with the `desc` field updated to reflect the preprocessing details (`preproc5mm100sZ` in the above example).
 
 ## Prerequisites
 1. Install [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
@@ -55,7 +57,8 @@ from finish_the_job import finish_the_job
 finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                subjects=[1,2,3],
                pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
-                           "highpass_filtering": 100  # Step 2: highpass filtering with 100 s filter size
+                           "highpass_filtering": 100,  # Step 2: highpass filtering with 100 s filter size
+                           "timecourse_normalization": "Z", # Step 3: Z-normalization of voxels timecourses
                            })
 ```
 
@@ -72,7 +75,8 @@ If you are working on the compute cluster of the Donders Institute, please follo
    finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                   subjects=[1,2,3],
                   pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
-                              "highpass_filtering": 100  # Step 2: highpass filtering with 100 s filter size
+                              "highpass_filtering": 100,  # Step 2: highpass filtering with 100 s filter size
+                              "timecourse_normalization": "Z", # Step 3: Z-normalization of voxels timecourses
                               })
    ```
 6. Run script by running command: `python3 mystudy_ftj.py`
