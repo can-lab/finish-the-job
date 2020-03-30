@@ -59,7 +59,7 @@ from finish_the_job import finish_the_job
 finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
                subjects=[1,2,3],
                pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
-                           "tempoal_filtering": [100, None],  # Step 2: highpass filtering with 100 s filter size
+                           "temporal_filtering": [100, None],  # Step 2: highpass filtering with 100 s filter size
                            "timecourse_normalization": "Z", # Step 3: Z-normalization of voxels timecourses
                            })
 ```
