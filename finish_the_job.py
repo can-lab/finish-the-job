@@ -3,7 +3,7 @@
 Nipype pipeline for common preprocessing steps after fMRIprep:
 
 - Spatial smoothing
-- Highpass filtering
+- Temporal filtering
 - Timecourse normalization
 
 Dependencies:
@@ -18,7 +18,7 @@ Dependencies:
 __author__ = "Florian Krause <f.krause@donders.ru.nl>, \
               Martin Krentz <m.krentz@donders.ru.nl>"
 __version__ = "0.1.0"
-__date__ = "2020-03-23"
+__date__ = "2020-03-30"
 
 
 import os
@@ -61,71 +61,6 @@ class TimecourseNormalization(BaseInterface):
 
         return outputs
 
-def create_highpass_filter(cutoff=100, name='highpass'):
-    """Create a highpass filter workflow.
-
-    Parameters
-    ==========
-    cutoff : numeric, optional
-        the cutoff value in seconds (default=100)
-    name : str, optional
-        the name of the workflow (default="highpass")
-
-    Returns
-    =======
-    highpass : nipype.Workflow object
-        the highpass filter workflow object
-
-    """
-
-    highpass = Workflow(name=name)
-    inputspec = Node(utility.IdentityInterface(fields=['in_files']),
-                     name='inputspec')
-
-    # Calculate sigma
-    def calculate_sigma(in_file, cutoff):
-        import subprocess
-        output = subprocess.check_output(
-            ['fslinfo', in_file]).decode().split("\n")
-        for out in output:
-            if out.startswith("pixdim4"):
-                sigma = cutoff / (2 * float(out.lstrip("pixdim4")))
-                return '-bptf %.10f -1' % sigma
-
-    getsigma = MapNode(utility.Function(function=calculate_sigma,
-                                        input_names=['in_file', 'cutoff'],
-                                        output_names=['op_string']),
-                       iterfield=['in_file'],
-                       name='getsigma')
-    getsigma.inputs.cutoff = cutoff
-
-    # Save mean
-    meanfunc = MapNode(fsl.ImageMaths(op_string='-Tmean', suffix='_mean',
-                                      out_data_type='int'),
-                       iterfield=["in_file"],
-                       name='meanfunc')
-
-    # Filter data
-    filter_ = MapNode(fsl.ImageMaths(suffix='_tempfilt', out_data_type='int'),
-                      iterfield=["in_file", "op_string"], name='filter')
-
-    # Restore mean
-    addmean = MapNode(fsl.BinaryMaths(operation='add', output_datatype='int'),
-                      iterfield=["in_file", "operand_file"], name='addmean')
-
-    outputspec = Node(utility.IdentityInterface(fields=['filtered_files']),
-                      name='outputspec')
-
-    highpass.connect(inputspec, 'in_files', filter_, 'in_file')
-    highpass.connect(inputspec, 'in_files', getsigma, 'in_file')
-    highpass.connect(getsigma, 'op_string', filter_, 'op_string')
-    highpass.connect(inputspec, 'in_files', meanfunc, 'in_file')
-    highpass.connect(filter_, 'out_file', addmean, 'in_file')
-    highpass.connect(meanfunc, 'out_file', addmean, 'operand_file')
-    highpass.connect(addmean, 'out_file', outputspec, 'filtered_files')
-
-    return highpass
-
 def create_timecourse_normalization_workflow(method="Z", name="normalization"):
     """Create a timcourse normalization workflow.
 
@@ -162,6 +97,80 @@ def create_timecourse_normalization_workflow(method="Z", name="normalization"):
 
     return normalization
 
+def create_temporal_filter(cutoffs=[100, None], name='tempfilt'):
+    """Create a temporal filter workflow.
+
+    Parameters
+    ==========
+    cutoffs : list, optional
+        the high and low cutoff value in seconds (default=[100, None])
+    name : str, optional
+        the name of the workflow (default="tempfilt")
+
+    Returns
+    =======
+    tempfilt : nipype.Workflow object
+        the temporal filter workflow object
+
+    """
+
+    tempfilt = Workflow(name=name)
+    inputspec = Node(utility.IdentityInterface(fields=['in_files']),
+                     name='inputspec')
+
+    # Calculate sigmas
+    def calculate_sigmas(in_file, cutoffs):
+        import subprocess
+        output = subprocess.check_output(
+            ['fslinfo', in_file]).decode().split("\n")
+        for out in output:
+            if out.startswith("pixdim4"):
+                if cutoffs[0] is None:
+                    hisigma = '-1'
+                else:
+                    hisigma = cutoffs[0] / (2 * float(out.lstrip("pixdim4")))
+                    hisigma = '{:.10f}'.format(hisigma)
+                if cutoffs[1] is None:
+                    losigma = '-1'
+                else:
+                    losigma = cutoffs[1] / (2 * float(out.lstrip("pixdim4")))
+                    losigma = '{:.10f}'.format(losigma)
+                return '-bptf {0} {1}'.format(hisigma, losigma)
+
+    getsigmas = MapNode(utility.Function(function=calculate_sigmas,
+                                         input_names=['in_file', 'cutoffs'],
+                                         output_names=['op_string']),
+                        iterfield=['in_file'],
+                        name='getsigmas')
+    getsigma.inputs.cutoffs = cutoffs
+
+    # Save mean
+    meanfunc = MapNode(fsl.ImageMaths(op_string='-Tmean', suffix='_mean',
+                                      out_data_type='int'),
+                       iterfield=["in_file"],
+                       name='meanfunc')
+
+    # Filter data
+    filter_ = MapNode(fsl.ImageMaths(suffix='_tempfilt', out_data_type='int'),
+                      iterfield=["in_file", "op_string"], name='filter')
+
+    # Restore mean
+    addmean = MapNode(fsl.BinaryMaths(operation='add', output_datatype='int'),
+                      iterfield=["in_file", "operand_file"], name='addmean')
+
+    outputspec = Node(utility.IdentityInterface(fields=['filtered_files']),
+                      name='outputspec')
+
+    tempfilt.connect(inputspec, 'in_files', filter_, 'in_file')
+    tempfilt.connect(inputspec, 'in_files', getsigmas, 'in_file')
+    tempfilt.connect(getsigmas, 'op_string', filter_, 'op_string')
+    tempfilt.connect(inputspec, 'in_files', meanfunc, 'in_file')
+    tempfilt.connect(filter_, 'out_file', addmean, 'in_file')
+    tempfilt.connect(meanfunc, 'out_file', addmean, 'operand_file')
+    tempfilt.connect(addmean, 'out_file', outputspec, 'filtered_files')
+
+    return tempfilt
+  
 def get_boldfile_template(fmriprep_dir, subject):
     """Return boldfile template string for given directory and subject.
 
@@ -238,8 +247,8 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
     pipeline : dict
         the preprocessing pipeline (ordered!); possible options are:
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
-            "highpass_filtering": numeric (cutoff value in seconds)
-            "timecourse_normalization": str ("Z" or "PCT")
+            "temporal_filtering": list (high and low cutoff values in seconds)
+            "timecourse_normalization": str (method; one of "Z" or "PCT")
     name : str, optional
         the name of the workflow (default="preprocessing")
 
@@ -269,13 +278,14 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
             state["last"] = smooth
             state["last_output"] = "outputnode.smoothed_files"
             state["suffix"] += "{0}mm".format(spec)
-        if step == "highpass_filtering":
-            highpass = create_highpass_filter(spec, name="highpass_filtering")
+        if step == "temporal_filtering":
+            tempfilt = create_temporal_filter(spec, name="temporal_filtering")
             preprocessing.connect(state["last"], state["last_output"],
-                                  highpass, "inputspec.in_files")
-            state["last"] = highpass
+                                  tempfilt, "inputspec.in_files")
+            state["last"] = tempfilt
             state["last_output"] = "outputspec.filtered_files"
-            state["suffix"] += "{0}s".format(spec)
+            state["suffix"] += "".join(
+                    [str(x) if x is None else "{0}s".format(x) for x in spec])
         if step == "timecourse_normalization":
             normalize = create_timecourse_normalization_workflow(
                 name="timecourse_normalization")
@@ -308,7 +318,8 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     pipeline : dict
         the preprocessing pipeline (ordered!); possible options are:
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
-            "highpass_filtering": numeric (cutoff value in seconds)
+            "temporal_filtering": list (high and cutoff values in seconds)
+            "timecourse_normalization": str (method; one of "Z" or "PCT")
     work_dir : str, optional
         the working directory (default=None)
 
@@ -318,7 +329,8 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     >>> finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
     ...                subjects=[1,2,3],
     ...                pipeline = {"spatial_smoothing": 5,
-    ...                            "highpass_filtering": 100})
+    ...                            "temporal_filtering": [100,None],
+                                   "timecourse_normalization": "Z"})
 
 
     """
