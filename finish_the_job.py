@@ -329,7 +329,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     >>> finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
     ...                subjects=[1,2,3],
     ...                pipeline = {"spatial_smoothing": 5,
-    ...                            "temporal_filtering": [100,None],
+    ...                            "temporal_filtering": [100, None],
                                    "timecourse_normalization": "Z"})
 
 
