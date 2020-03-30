@@ -8,7 +8,7 @@ fMRIprep stops preprocessing after normalization. Often you also need your data 
 
 Currently available preprocessing steps:
 * **"spatial_smoothing"**
-  * _spec_: FHWM kernel size in millimeter (numeric)
+  * _spec_: FWHM kernel size in millimeter (numeric)
 * **"temporal_filtering"**
   * _spec_: highpass and lowpass filter sizes in seconds (list)
 * **"timecourse_normalization"** (**Note:** also performs brain extraction!)
