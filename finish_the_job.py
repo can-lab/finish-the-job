@@ -142,7 +142,7 @@ def create_temporal_filter(cutoffs=[100, None], name='tempfilt'):
                                          output_names=['op_string']),
                         iterfield=['in_file'],
                         name='getsigmas')
-    getsigma.inputs.cutoffs = cutoffs
+    getsigmas.inputs.cutoffs = cutoffs
 
     # Save mean
     meanfunc = MapNode(fsl.ImageMaths(op_string='-Tmean', suffix='_mean',
