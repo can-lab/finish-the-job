@@ -12,17 +12,17 @@ Currently available preprocessing steps:
 * **"temporal_filtering"**
   * _spec_: highpass and lowpass filter sizes in seconds (list)
 * **"timecourse_normalization"** (**Note:** also performs brain extraction!)
-  * _spec_: normalization methods ("Z" or "PCT")
+  * _spec_: normalization methods ("Zscore" or "PCT")
 
 Pipelines are simply dictionaries with preprocessing steps as keys and their specs as values.
 
-Example pipeline `{"spatial_smoothing": 5, "temporal_filtering": [100, None], "timecourse_normalization": "Z"}`:
+Example pipeline `{"spatial_smoothing": 5, "temporal_filtering": [100, None], "timecourse_normalization": "Zscore"}`:
 
 <a href="https://github.com/can-lab/finish-the-job/blob/master/graph_colored.png">
   <img src="https://github.com/can-lab/finish-the-job/raw/master/graph_colored.png" width="300">
 </a>
 
-Preprocessed images are saved next to the input images, with the `desc` field updated to reflect the preprocessing details (`preproc5mm100sNoneZ` in the above example).
+Preprocessed images are saved next to the input images, with the `desc` field updated to reflect the preprocessing details (`preproc5mm100sNoneZscore` in the above example).
 
 ## Prerequisites
 1. Install [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
@@ -41,8 +41,8 @@ Preprocessed images are saved next to the input images, with the `desc` field up
 ### Donders cluster
 If you are working on the compute cluster of the Donders Institute, please follow the following steps:
 1. Load Anaconda3 module by running command: `module load anaconda3`
-2. Create new environment in home directory by running command: `cd && conda create --name ftj_env`
-4. Activate new environment by running command: `source activate ftj_env`
+2. Create new environment in home directory by running command: `cd && python3 -m venv ftj_env`
+4. Activate new environment by running command: `source ftj_env/bin/activate`
 5. Install Nipype, Nifow-manager into environment by running command: `pip3 install nipype niflow-manager niflow-nipype1-workflows`
 6. Download [Finish the job](https://github.com/can-lab/finish-the-job/archive/master.zip)
 7. Install with
@@ -69,7 +69,7 @@ If you are working on the compute cluster of the Donders Institute, please follo
 1. Start a new interactive job by running command: `qsub -I -l 'procs=8, mem=64gb, walltime=24:00:00'`
 2. Load Anaconda3 module by running command: `module load anaconda3`
 3. Load graphviz module by running command: `module load graphviz`
-4. Activate environment by running command: `source activate ftj_env`
+4. Activate environment by running command: `source tj_env/bin/activate`
 5. Write script `mystudy_ftj.py` with custom workflow; example:
    ```python
    from finish_the_job import finish_the_job
@@ -78,7 +78,7 @@ If you are working on the compute cluster of the Donders Institute, please follo
                   subjects=[1,2,3],
                   pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
                               "temporal_filtering": [100, None],  # Step 2: highpass filtering with 100 s filter size
-                              "timecourse_normalization": "Z", # Step 3: Z-normalization of voxels timecourses
+                              "timecourse_normalization": "Zscore", # Step 3: Z-normalization of voxels timecourses
                               })
    ```
 6. Run script by running command: `python3 mystudy_ftj.py`
