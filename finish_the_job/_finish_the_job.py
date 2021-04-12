@@ -56,13 +56,13 @@ class TimecourseNormalization(BaseInterface):
 
         return outputs
 
-def create_timecourse_normalization_workflow(method="Z", name="normalization"):
+def create_timecourse_normalization_workflow(method="Zscore", name="normalization"):
     """Create a timcourse normalization workflow.
 
     Parameters
     ==========
     method : str, optional
-        the normalization method ("Z" or "PCT"; default="Z")
+        the normalization method ("Zscore" or "PSC"; default="Zscore")
     name : str, optional
         the name of the workflow (default="normalization")
 
@@ -243,7 +243,7 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
         the preprocessing pipeline (ordered!); possible options are:
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
             "temporal_filtering": list (high and low cutoff values in seconds)
-            "timecourse_normalization": str (method; one of "Z" or "PCT")
+            "timecourse_normalization": str (method; one of "Zscore" or "PSC")
     name : str, optional
         the name of the workflow (default="preprocessing")
 
@@ -314,7 +314,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
         the preprocessing pipeline (ordered!); possible options are:
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
             "temporal_filtering": list (high and cutoff values in seconds)
-            "timecourse_normalization": str (method; one of "Z" or "PCT")
+            "timecourse_normalization": str (method; one of "Zscore" or "PSC")
     work_dir : str, optional
         the working directory (default=None)
 
@@ -325,7 +325,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     ...                subjects=[1,2,3],
     ...                pipeline = {"spatial_smoothing": 5,
     ...                            "temporal_filtering": [100, None],
-                                   "timecourse_normalization": "Z"})
+                                   "timecourse_normalization": "Zscore"})
 
 
     """
