@@ -69,7 +69,7 @@ If you are working on the compute cluster of the Donders Institute, please follo
 1. Start a new interactive job by running command: `qsub -I -l 'procs=8, mem=64gb, walltime=24:00:00'`
 2. Load Anaconda3 module by running command: `module load anaconda3`
 3. Load graphviz module by running command: `module load graphviz`
-4. Activate environment by running command: `source tj_env/bin/activate`
+4. Activate environment by running command: `source ftj_env/bin/activate`
 5. Write script `mystudy_ftj.py` with custom workflow; example:
    ```python
    from finish_the_job import finish_the_job
