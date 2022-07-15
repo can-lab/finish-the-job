@@ -56,7 +56,7 @@ Example:
 ```python
 from finish_the_job import finish_the_job
 
-finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
+finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/",
                subjects=[1,2,3],
                pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
                            "temporal_filtering": [100, None],  # Step 2: highpass filtering with 100 s filter size
@@ -74,7 +74,7 @@ If you are working on the compute cluster of the Donders Institute, please follo
    ```python
    from finish_the_job import finish_the_job
 
-   finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/"
+   finish_the_job(fmriprep_dir="/path/to/fmriprep_dir/",
                   subjects=[1,2,3],
                   pipeline = {"spatial_smoothing": 5,  # Step 1: spatial smoothing with 5 mm kernel
                               "temporal_filtering": [100, None],  # Step 2: highpass filtering with 100 s filter size
