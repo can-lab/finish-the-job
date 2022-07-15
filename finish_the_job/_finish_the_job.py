@@ -205,7 +205,10 @@ def get_masks(bold_files):
 
     """
 
-    return [x.replace("preproc_bold", "brain_mask") for x in bold_files]
+    import re
+
+    masks = [x.replace("preproc_bold", "brain_mask") for x in bold_files]
+    return [re.sub("echo-[0-9]_", "", x) for x in masks]  # new since fmriprep 21.0.0
 
 def get_output_filename(bold_filename, suffix):
     """Get output filename for given bold filename and suffix.
