@@ -165,7 +165,7 @@ def create_temporal_filter(cutoffs=[100, None], name='tempfilt'):
     tempfilt.connect(addmean, 'out_file', outputspec, 'filtered_files')
 
     return tempfilt
-  
+
 def get_boldfile_template(fmriprep_dir, subject):
     """Return boldfile template string for given directory and subject.
 
@@ -306,6 +306,12 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
 
     return preprocessing
 
+def str2list(x):
+    if type(x) is str:
+        return [x]
+    else:
+        return x
+
 def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     """Run common preprocessing steps after fMRIprep.
 
@@ -358,7 +364,8 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
 
     # Preprocess files
     preprocessing = create_preprocessing_workflow(pipeline=pipeline)
-    ftj.connect(dg, "outfiles", preprocessing, "inputspec.in_files")
+    ftj.connect(dg, ("outfiles", str2list),
+                preprocessing, "inputspec.in_files")
 
     # Get output filenames
     filenames = MapNode(utility.Function(input_names=["bold_filename",
@@ -368,7 +375,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
                         iterfield=["bold_filename"],
                     name='create_output_filenames')
     ftj.connect(preprocessing, "outputspec.suffix", filenames, "suffix")
-    ftj.connect(dg, "outfiles", filenames, "bold_filename")
+    ftj.connect(dg, ("outfiles", str2list), filenames, "bold_filename")
 
     # Save preprocessed files
     ef = MapNode(io.ExportFile(), iterfield=["in_file", "out_file"],
