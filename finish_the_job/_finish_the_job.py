@@ -357,15 +357,22 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     boldfile_template.inputs.fmriprep_dir = fmriprep_dir
     boldfile_template.iterables = ("subject", subjects)
 
+
     # Get inputs
     dg = Node(io.DataGrabber(), name="get_data")
     dg.inputs.sort_filelist = True
     ftj.connect(boldfile_template, "template", dg, "template")
 
+    # Ensure inputs are list
+    ensure_list = Node(utility.Function(input_names=["in_files"],
+                                        output_names=["out_files"],
+                                        function=str2list),
+                    name='ensure_data_is_list')
+    ftj.connect(dg, "outfiles", ensure_list, "in_files")
+
     # Preprocess files
     preprocessing = create_preprocessing_workflow(pipeline=pipeline)
-    ftj.connect(dg, ("outfiles", str2list),
-                preprocessing, "inputspec.in_files")
+    ftj.connect(ensure_list, "out_files", preprocessing, "inputspec.in_files")
 
     # Get output filenames
     filenames = MapNode(utility.Function(input_names=["bold_filename",
@@ -375,7 +382,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
                         iterfield=["bold_filename"],
                     name='create_output_filenames')
     ftj.connect(preprocessing, "outputspec.suffix", filenames, "suffix")
-    ftj.connect(dg, ("outfiles", str2list), filenames, "bold_filename")
+    ftj.connect(ensure_list, "out_files", filenames, "bold_filename")
 
     # Save preprocessed files
     ef = MapNode(io.ExportFile(), iterfield=["in_file", "out_file"],
