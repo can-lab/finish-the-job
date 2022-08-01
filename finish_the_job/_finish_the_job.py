@@ -306,11 +306,11 @@ def create_preprocessing_workflow(pipeline, name="preprocessing"):
 
     return preprocessing
 
-def str2list(x):
-    if type(x) is str:
-        return [x]
+def infiles_to_list(in_files):
+    if type(in_files) is str:
+        return [in_files]
     else:
-        return x
+        return in_files
 
 def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     """Run common preprocessing steps after fMRIprep.
@@ -366,7 +366,7 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
     # Ensure inputs are list
     ensure_list = Node(utility.Function(input_names=["in_files"],
                                         output_names=["out_files"],
-                                        function=str2list),
+                                        function=infiles_to_list),
                     name='ensure_data_is_list')
     ftj.connect(dg, "outfiles", ensure_list, "in_files")
 
