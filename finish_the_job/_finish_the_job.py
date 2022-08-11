@@ -166,7 +166,7 @@ def create_temporal_filter(cutoffs=[100, None], name='tempfilt'):
 
     return tempfilt
 
-def get_boldfile_template(fmriprep_dir, subject):
+def get_boldfile_template(fmriprep_dir, subject, desc):
     """Return boldfile template string for given directory and subject.
 
     Paramters
@@ -175,6 +175,8 @@ def get_boldfile_template(fmriprep_dir, subject):
         the path to the fMRIprep directory
     subject : str or int
         the subject identifier
+    desc : str
+        the 'desc' field of the image filename
 
     Returns
     =======
@@ -188,14 +190,14 @@ def get_boldfile_template(fmriprep_dir, subject):
     if type(subject) == int:
         subject = "sub-{0:03d}".format(subject)
     return os.path.join(fmriprep_dir, subject, "ses-*", "func",
-                        "*_desc-preproc_bold.nii.gz")
+                        f"*_desc-{desc}_bold.nii.gz")
 
 def get_masks(bold_files):
     """Get mask files for given bold files.
 
     Parameters
     ==========
-    bold_files = list
+    bold_files : list
         the list of bold files
 
     Returns
@@ -208,7 +210,8 @@ def get_masks(bold_files):
     import os
     import re
 
-    masks = [x.replace("preproc_bold", "brain_mask") for x in bold_files]
+    #masks = [x.replace("preproc_bold", "brain_mask") for x in bold_files]
+    masks = [re.sub("_desc-.+_bold", "_desc-brain_mask") for x in bold_files]
     return  [re.sub("echo-[0-9]_", "", x) if not os.path.isfile(x) \
              else x for x in masks]  # new since fmriprep 21.0.0
 
@@ -312,7 +315,8 @@ def infiles_to_list(in_files):
     else:
         return in_files
 
-def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
+def finish_the_job(fmriprep_dir, subjects, pipeline, desc="preproc",
+                   work_dir=None):
     """Run common preprocessing steps after fMRIprep.
 
     Parameters
@@ -326,6 +330,8 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
             "spatial_smoothing": numeric (FWHM Gaussian kernel in millimeters)
             "temporal_filtering": list (high and cutoff values in seconds)
             "timecourse_normalization": str (method; one of "Zscore" or "PSC")
+    desc : str, optional
+        the 'desc' field of the image filename (default="preproc")
     work_dir : str, optional
         the working directory (default=None)
 
@@ -350,11 +356,13 @@ def finish_the_job(fmriprep_dir, subjects, pipeline, work_dir=None):
 
     # Get boldfile template
     boldfile_template = Node(utility.Function(input_names=["fmriprep_dir",
-                                                           "subject"],
+                                                           "subject",
+                                                           "desc"],
                                               output_names=["template"],
                                               function=get_boldfile_template),
                     name='locate_bold_files')
     boldfile_template.inputs.fmriprep_dir = fmriprep_dir
+    boldfile_template.inputs.desc = desc
     boldfile_template.iterables = ("subject", subjects)
 
 
