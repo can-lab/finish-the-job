@@ -210,9 +210,9 @@ def get_masks(bold_files):
     import os
     import re
 
-    #masks = [x.replace("preproc_bold", "brain_mask") for x in bold_files]
-    masks = [re.sub("_desc-.+_bold", "_desc-brain_mask", x) for x in \
-             bold_files]
+    masks = [re.sub("desc-.+_bold", "desc-brain_mask", x) for x in  bold_files]
+    masks = [x.replace("space-MNI152NLin2009cAsym", "space-MNI152NLin6Asym") \
+             if not os.path.isfile(x) else x for x in masks]
     return  [re.sub("echo-[0-9]_", "", x) if not os.path.isfile(x) \
              else x for x in masks]  # new since fmriprep 21.0.0
 
